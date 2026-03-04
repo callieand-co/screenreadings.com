@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Screen Readings</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #08060e;
+    --void: #0d0a17;
+    --panel: #110e1d;
+    --glow-purple: #8b5cf6;
+    --glow-blue: #3b82f6;
+    --mystic: #c084fc;
+    --pale: #e2d9f3;
+    --smoke: #9ca3af80;
+    --gold: #d4a853;
+    --gold-dim: #a8843f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--deep);
+    color: var(--pale);
+    font-family: 'Cormorant Garamond', serif;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  /* === NOISE OVERLAY === */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* === SCANLINE EFFECT === */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 92, 246, 0.015) 2px,
+      rgba(139, 92, 246, 0.015) 4px
+    );
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* === FLOATING ORBS === */
+  .orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+    animation: drift 20s ease-in-out infinite;
+  }
+  .orb-1 {
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(139,92,246,0.15), transparent 70%);
+    top: -100px; left: -100px;
+    animation-delay: 0s;
+  }
+  .orb-2 {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(59,130,246,0.12), transparent 70%);
+    bottom: 10%; right: -80px;
+    animation-delay: -7s;
+    animation-duration: 25s;
+  }
+  .orb-3 {
+    width: 250px; height: 250px;
+    background: radial-gradient(circle, rgba(192,132,252,0.08), transparent 70%);
+    top: 50%; left: 40%;
+    animation-delay: -13s;
+    animation-duration: 30s;
+  }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    25% { transform: translate(30px, -20px) scale(1.05); }
+    50% { transform: translate(-20px, 30px) scale(0.95); }
+    75% { transform: translate(15px, 15px) scale(1.02); }
+  }
+
+  /* === LAYOUT === */
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* === HEADER / HERO === */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 60px 24px;
+    position: relative;
+  }
+
+  .eye-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 40px;
+  }
+
+  .eye-ring {
+    position: absolute;
+    inset: 0;
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 50%;
+    animation: pulse-ring 4s ease-in-out infinite;
+  }
+  .eye-ring:nth-child(2) {
+    inset: -12px;
+    border-color: rgba(59,130,246,0.15);
+    animation-delay: -1.3s;
+  }
+  .eye-ring:nth-child(3) {
+    inset: -24px;
+    border-color: rgba(192,132,252,0.08);
+    animation-delay: -2.6s;
+  }
+
+  @keyframes pulse-ring {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.08); opacity: 0.5; }
+  }
+
+  .eye-symbol {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    filter: drop-shadow(0 0 20px rgba(139,92,246,0.4));
+    animation: float 6s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  .tagline-above {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--smoke);
+    margin-bottom: 20px;
+    animation: fade-in 1.5s ease 0.3s both;
+  }
+
+  h1 {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(42px, 8vw, 72px);
+    font-weight: 400;
+    letter-spacing: 3px;
+    line-height: 1.1;
+    background: linear-gradient(135deg, var(--pale) 0%, var(--mystic) 40%, var(--glow-blue) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 28px;
+    animation: fade-in 1.5s ease 0.6s both;
+  }
+
+  .subtitle {
+    font-size: clamp(18px, 3vw, 24px);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--smoke);
+    max-width: 500px;
+    line-height: 1.6;
+    animation: fade-in 1.5s ease 0.9s both;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    animation: fade-in 1.5s ease 1.5s both;
+  }
+
+  .scroll-hint span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: rgba(139,92,246,0.4);
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, rgba(139,92,246,0.4), transparent);
+    animation: scroll-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scroll-pulse {
+    0%, 100% { opacity: 1; transform: scaleY(1); }
+    50% { opacity: 0.3; transform: scaleY(0.6); }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === DIVIDER === */
+  .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 60px 0;
+    color: rgba(139,92,246,0.25);
+    font-size: 14px;
+    letter-spacing: 8px;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    max-width: 120px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139,92,246,0.2), transparent);
+  }
+
+  /* === BODY COPY SECTION === */
+  .reading-section {
+    padding: 0 24px 80px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+
+  .copy-block {
+    font-size: clamp(17px, 2.5vw, 20px);
+    font-weight: 300;
+    line-height: 1.85;
+    color: rgba(226,217,243,0.8);
+    margin-bottom: 32px;
+  }
+
+  .copy-block em {
+    color: var(--mystic);
+    font-style: italic;
+  }
+
+  .highlight-line {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(20px, 3.5vw, 28px);
+    font-weight: 400;
+    text-align: center;
+    color: var(--pale);
+    padding: 48px 0;
+    line-height: 1.5;
+    background: linear-gradient(135deg, var(--pale), var(--mystic));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* === WHAT IT REVEALS CARDS === */
+  .reveals-section {
+    padding: 0 24px 80px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .reveals-heading {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: var(--glow-purple);
+    text-align: center;
+    margin-bottom: 48px;
+  }
+
+  .reveal-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .reveal-card {
+    background: linear-gradient(135deg, rgba(139,92,246,0.06), rgba(59,130,246,0.03));
+    border: 1px solid rgba(139,92,246,0.1);
+    border-radius: 2px;
+    padding: 28px 24px;
+    transition: all 0.5s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .reveal-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--glow-purple), transparent);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+
+  .reveal-card:hover {
+    border-color: rgba(139,92,246,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(139,92,246,0.08);
+  }
+
+  .reveal-card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 24px;
+    margin-bottom: 14px;
+    display: block;
+    filter: grayscale(0.3);
+  }
+
+  .card-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px;
+    color: var(--pale);
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+
+  .card-desc {
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--smoke);
+    line-height: 1.6;
+  }
+
+  /* === SIGNUP SECTION === */
+  .signup-section {
+    padding: 80px 24px 120px;
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .signup-border {
+    border: 1px solid rgba(139,92,246,0.15);
+    border-radius: 2px;
+    padding: 56px 40px;
+    position: relative;
+    background: linear-gradient(180deg, rgba(17,14,29,0.8), rgba(8,6,14,0.9));
+  }
+
+  .signup-border::before {
+    content: '✦';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--deep);
+    padding: 0 16px;
+    color: var(--glow-purple);
+    font-size: 14px;
+  }
+
+  .signup-heading {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(22px, 4vw, 32px);
+    font-weight: 400;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, var(--pale), var(--mystic));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .signup-sub {
+    font-size: 16px;
+    font-weight: 300;
+    font-style: italic;
+    color: var(--smoke);
+    margin-bottom: 36px;
+    line-height: 1.6;
+  }
+
+  .form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  .form-row input {
+    flex: 1;
+    background: rgba(139,92,246,0.05);
+    border: 1px solid rgba(139,92,246,0.15);
+    border-radius: 2px;
+    padding: 14px 18px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--pale);
+    outline: none;
+    transition: all 0.3s ease;
+  }
+
+  .form-row input::placeholder {
+    color: rgba(156,163,175,0.4);
+    font-style: italic;
+  }
+
+  .form-row input:focus {
+    border-color: var(--glow-purple);
+    box-shadow: 0 0 20px rgba(139,92,246,0.1);
+    background: rgba(139,92,246,0.08);
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(59,130,246,0.15));
+    border: 1px solid rgba(139,92,246,0.3);
+    border-radius: 2px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: var(--pale);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .submit-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, var(--glow-purple), var(--glow-blue));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  .submit-btn:hover {
+    border-color: var(--glow-purple);
+    box-shadow: 0 0 30px rgba(139,92,246,0.2);
+    transform: translateY(-1px);
+  }
+
+  .submit-btn:hover::before { opacity: 0.15; }
+
+  .submit-btn span {
+    position: relative;
+    z-index: 1;
+  }
+
+  .form-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(156,163,175,0.3);
+    margin-top: 20px;
+    text-transform: uppercase;
+  }
+
+  /* === SUCCESS STATE === */
+  .success-msg {
+    display: none;
+    padding: 20px;
+    color: var(--mystic);
+    font-style: italic;
+    font-size: 18px;
+  }
+
+  .success-msg.show {
+    display: block;
+    animation: fade-in 0.6s ease both;
+  }
+
+  .form-content.hidden { display: none; }
+
+  /* === FOOTER === */
+  footer {
+    text-align: center;
+    padding: 40px 24px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-mark {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 14px;
+    color: rgba(139,92,246,0.2);
+    letter-spacing: 3px;
+  }
+
+  .footer-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    color: rgba(156,163,175,0.2);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 600px) {
+    .reveal-cards { grid-template-columns: 1fr; }
+    .form-row { flex-direction: column; }
+    .signup-border { padding: 40px 24px; }
+    .eye-container { width: 90px; height: 90px; }
+    .eye-symbol { font-size: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eye-container">
+    <div class="eye-ring"></div>
+    <div class="eye-ring"></div>
+    <div class="eye-ring"></div>
+    <div class="eye-symbol">🔮</div>
+  </div>
+  <div class="tagline-above">The oracle is in your pocket</div>
+  <h1>Screen<br>Readings</h1>
+  <p class="subtitle">Your screen time tells a story.<br>It's time someone read it for you.</p>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider">✦ ✦ ✦</div>
+
+<!-- BODY COPY -->
+<section class="reading-section">
+  <p class="copy-block">
+    For centuries, we've turned to palm readers, tarot cards, and astrologers to understand who we are — to find patterns in the chaos, to have someone hold up a mirror and say <em>this is what I see.</em>
+  </p>
+  <p class="copy-block">
+    A Screen Reading works the same way — except instead of reading your lifeline or pulling The Tower, we're reading the app that got 4 hours of your attention yesterday, the 47 pickups before noon, and the notification pattern that has your nervous system on a hair trigger before you've even had coffee.
+  </p>
+
+  <p class="highlight-line">Your screen is already speaking.<br>Most of us have just never listened.</p>
+
+  <p class="copy-block">
+    Your screen time data tells a story about your habits, your stress, your coping mechanisms, and where your cognitive energy is <em>actually</em> going versus where you think it's going. It's personal. It can even feel a little exposing — the same way sitting across from someone reading your cards does. But that's exactly why it works.
+  </p>
+  <p class="copy-block">
+    A Screen Reading isn't a judgment. It's a mirror. Just like a tarot pull doesn't tell you what to do — it shows you what you already know but haven't looked at. We live in a shared digital culture. Everyone has a screen. Everyone has a story their screen is telling. Think of it as a reading for the modern age — where the oracle is the device in your pocket, and the wisdom is learning what it says about how you're actually living.
+  </p>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider">✦</div>
+
+<!-- WHAT IT REVEALS -->
+<section class="reveals-section">
+  <div class="reveals-heading">What your screen reveals</div>
+  <div class="reveal-cards">
+    <div class="reveal-card">
+      <span class="card-icon">🧠</span>
+      <div class="card-label">Cognitive Patterns</div>
+      <div class="card-desc">Where your attention is actually going — and what it's costing your creativity and focus.</div>
+    </div>
+    <div class="reveal-card">
+      <span class="card-icon">⚡</span>
+      <div class="card-label">Energy Drains</div>
+      <div class="card-desc">The apps and habits quietly depleting you before you've even started your real work.</div>
+    </div>
+    <div class="reveal-card">
+      <span class="card-icon">🪞</span>
+      <div class="card-label">Coping Mechanisms</div>
+      <div class="card-desc">What your scroll patterns say about your stress, your comfort zones, and your nervous system.</div>
+    </div>
+    <div class="reveal-card">
+      <span class="card-icon">🌀</span>
+      <div class="card-label">Hidden Stories</div>
+      <div class="card-desc">The relationship you've built with your device — and what that relationship reveals about how you're living.</div>
+    </div>
+  </div>
+</section>
+
+<!-- DIVIDER -->
+<div class="divider">✦ ✦ ✦</div>
+
+<!-- SIGNUP -->
+<section class="signup-section">
+  <div class="signup-border">
+    <h2 class="signup-heading">Request a Reading</h2>
+    <p class="signup-sub">Be the first to know when Screen Readings are available. No spam, no noise — just signal.</p>
+
+    <div class="form-content" id="formContent">
+      <div class="form-row">
+        <input type="text" id="nameField" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="form-row">
+        <input type="email" id="emailField" placeholder="Your email" autocomplete="email">
+      </div>
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">
+        <span>Join the Waitlist</span>
+      </button>
+      <p class="form-note">Your data stays yours. Always.</p>
+    </div>
+
+    <div class="success-msg" id="successMsg">
+      ✦ You're on the list. We'll be in touch when it's time for your reading.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-mark">Screen Readings</div>
+  <div class="footer-sub">A conscious tech offering</div>
+</footer>
+
+<script>
+function handleSubmit() {
+  const name = document.getElementById('nameField').value.trim();
+  const email = document.getElementById('emailField').value.trim();
+
+  if (!email || !email.includes('@')) {
+    document.getElementById('emailField').style.borderColor = '#ef4444';
+    setTimeout(() => {
+      document.getElementById('emailField').style.borderColor = 'rgba(139,92,246,0.15)';
+    }, 2000);
+    return;
+  }
+
+  document.getElementById('formContent').classList.add('hidden');
+  document.getElementById('successMsg').classList.add('show');
+}
+
+// Subtle parallax on orbs
+document.addEventListener('mousemove', (e) => {
+  const x = (e.clientX / window.innerWidth - 0.5) * 20;
+  const y = (e.clientY / window.innerHeight - 0.5) * 20;
+  document.querySelectorAll('.orb').forEach((orb, i) => {
+    const factor = (i + 1) * 0.4;
+    orb.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+  });
+});
+</script>
+</body>
+</html>
