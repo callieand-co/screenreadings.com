@@ -639,13 +639,14 @@
 
 <footer>
   <div class="footer-mark">Screen Readings</div>
-  <div class="footer-sub">A conscious tech offering</div>
+  <div class="footer-sub"><a href="https://www.consciousstack.com/" target="_blank" rel="noopener" style="color: inherit; text-decoration: none; transition: color 0.3s ease;" onmouseover="this.style.color='rgba(139,92,246,0.5)'" onmouseout="this.style.color='inherit'">A conscious tech offering</a></div>
 </footer>
 
 <script>
-function handleSubmit() {
+async function handleSubmit() {
   const name = document.getElementById('nameField').value.trim();
   const email = document.getElementById('emailField').value.trim();
+  const btn = document.getElementById('submitBtn');
 
   if (!email || !email.includes('@')) {
     document.getElementById('emailField').style.borderColor = '#ef4444';
@@ -655,8 +656,33 @@ function handleSubmit() {
     return;
   }
 
-  document.getElementById('formContent').classList.add('hidden');
-  document.getElementById('successMsg').classList.add('show');
+  btn.disabled = true;
+  btn.querySelector('span').textContent = '...';
+
+  try {
+    const res = await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email }),
+    });
+
+    if (res.ok) {
+      document.getElementById('formContent').classList.add('hidden');
+      document.getElementById('successMsg').classList.add('show');
+    } else {
+      btn.querySelector('span').textContent = 'Something went wrong — try again';
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.querySelector('span').textContent = 'Join the Waitlist';
+      }, 3000);
+    }
+  } catch (err) {
+    btn.querySelector('span').textContent = 'Connection error — try again';
+    btn.disabled = false;
+    setTimeout(() => {
+      btn.querySelector('span').textContent = 'Join the Waitlist';
+    }, 3000);
+  }
 }
 
 // Subtle parallax on orbs
