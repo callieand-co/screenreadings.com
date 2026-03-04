@@ -65,14 +65,14 @@ export default async function handler(req, res) {
 
     if (!flodeskRes.ok) {
       const errText = await flodeskRes.text();
-      console.error('Flodesk error:', errText);
-      results.flodesk = 'error';
+      console.error('Flodesk error:', flodeskRes.status, errText);
+      results.flodesk = { status: flodeskRes.status, detail: errText };
     } else {
       results.flodesk = 'ok';
     }
   } catch (err) {
-    console.error('Flodesk exception:', err);
-    results.flodesk = 'error';
+    console.error('Flodesk exception:', err.message);
+    results.flodesk = { exception: err.message };
   }
 
   // Return success if at least one worked
